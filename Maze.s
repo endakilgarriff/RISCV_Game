@@ -1,9 +1,7 @@
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
-addi sp sp -4
 jal ra pollInport # this will loop
-addi sp sp -4
 
 #Draws the maze and adds user in on location (0,0)
 InitializeDisplay:
@@ -63,8 +61,9 @@ or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
 addi x11 x0 0 #Users row position reference 
 sw x12 0x00(x11) #writing the user and maze to display
 jal ra blinkUser3
-addi sp sp 4
-jalr zero 0(ra)
+addi sp sp -4
+lw ra 0(sp)
+jalr  ra
 
 moveUser_right:
     jal x1 checkRightValid
@@ -165,22 +164,27 @@ lw x12 0x0(x11) #user location and maze bits.
 xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
 and x15 x13 x12 # NO USER MAZE BITS
 sw x15 0x0(x11) # remove
-jal x7 oneSecDelay
+jal ra oneSecDelay
 addi sp sp -4
+lw ra 0(sp)
 sw x12 0x0(x11) # add
-jal x7 oneSecDelay
+jal ra oneSecDelay
 addi sp sp -4
+lw ra 0(sp)
 sw x15 0x0(x11) # remove
-jal x7 oneSecDelay
+jal ra oneSecDelay
 addi sp sp -4
+lw ra 0(sp)
 sw x12 0x0(x11) # add
-jal x7 oneSecDelay
+jal ra oneSecDelay
 addi sp sp -4
+lw ra 0(sp)
 sw x15 0x0(x11) # remove
-jal x7 oneSecDelay
+jal ra oneSecDelay
 addi sp sp -4
+lw ra 0(sp)
 sw x12 0x0(x11) # add
-jalr zero 0(ra)
+jalr ra
 
 # any way this could be optimised more ^^^ loop?
 
@@ -188,13 +192,12 @@ oneSecDelay:
 sw ra 0(sp)  #Pushing the return address to the stack pointer.
 addi sp sp 4
 lui x14 0x00601
-jal x6 oneSecLoop
+jal ra oneSecLoop
 addi sp sp -4
-jalr zero 0(ra)
+lw ra 0(sp)
+jalr ra
 
 oneSecLoop:   
-sw ra 0(sp)  #Pushing the return address to the stack pointer.
-addi sp sp 4         
 addi x14 x14 -1           # decr delay counter
 bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
-jalr zero 0(ra)
+jalr ra
