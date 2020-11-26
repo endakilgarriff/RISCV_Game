@@ -1,9 +1,47 @@
-addi sp zero 0x7ff #Initializing the stack on register x2
+# RISC-V Maze game
+# Created by Enda Kilgarriff (17351606) - Maya McDevitt , National University of Ireland, Galway
+# Creation date: Nov 2020
+#
+#==============================
+
+# Copy/modify/paste this assembly program to Venus online assembler / simulator (Editor Window TAB) 
+# Venus https://www.kvakil.me/venus/
+
+# Convert Venus program dump (column of 32-bit instrs) to vicilogic instruction memory format (rows of 8x32-bit instrs)
+# https://www.vicilogic.com/static/ext/RISCV/programExamples/convert_VenusProgramDump_to_vicilogicInstructionMemoryFormat.pdf
+
+# Load machine code into vicilogic (256 arena): 
+# https://www.vicilogic.com/vicilearn/run_step/?s_id=1762
+
+# assembly program   # Notes  (default imm format is decimal 0d)
+
+# register allocation
+#  x7  newTargetLoopCount = 8
+#  x8  0x80000000, bit 31 asserted  
+#  x9  general use register 
+#  x10 target register, seed with 0x801000
+#  x11 player register, seed with 0x080000 
+#  x12  general use register 
+#  x13 loopCount 
+#  x14  general use register 
+#  x15  peripheral counter base address = 0x00010000
+#   Address offsets:
+#    Input: 
+#	   control0 register address  offset = 0,    (2:0) = Counter load, up, countCE
+#      X"0000" & loadDat(15:0)    offset = 4,    counter loadDat(15:0)
+#      X"0000" & count(15:0)      offset = 8,    count(15:0) 
+#      X"0000" & rinport(15:0)    offset = 0xc,  Registered inport value (inport delayed by one clk period)
+#    Output:
+#      X"0000" & outport(15:0)    offset = 0x10, outport(15:0) value
+
+addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 addi x31 x0 0x500 # Debug offset - start display memory
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
 jal ra pollInport # Program contained in this loop
+
+Error:
 lui x10 0xDEAD # Play location out of bound - exited program
 loop: jal zero loop # Loop forever 
 
@@ -65,10 +103,14 @@ lui x10 0x80000 #user bit memory reference
 or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
 addi x11 x31 0 #Users row position reference 
 sw x12 0x0(x11) #writing the user and maze to display
-jal ra blinkUser3
-addi sp sp -4
-lw ra 0(sp)
-jalr  ra
+    addi x14 zero 0x3
+    loop3: # BlinkUser 3 times at start
+        jal ra blinkUser
+        addi x14 x14 -1
+        beq x14 x0 loop3
+    addi sp sp -4
+    lw ra 0(sp)
+    jalr  ra
 
 moveUser_right:
     jal ra checkRightValid
@@ -81,30 +123,31 @@ moveUser_right:
 
 moveUser_left:
     jal ra checkLeftValid
-    jal x9 restoreRowToDefault
+    jal ra restoreRowToDefault
     slli x10 x10 0x1 # Shift user right 1
     xor x12 x12 x10 # Draw user into row
     sw x12 0x0(x11)
-    jal x7 oneSecDelay
+    jal ra oneSecDelay
     jal zero pollInport
 
 moveUser_up:
     jal ra checkUpValid
-    jal x9 restoreRowToDefault   # jump to restore default
+    jal ra restoreRowToDefault   # jump to restore default
     addi x11 x11 0x4 # update User row reference with new current position 
-    xor x12 x10 x12 # draw user into row
+    lw x13 0x0(x11)
+    xor x12 x10 x13 # draw user into row
     sw x12 0x0(x11)
-    jal x7 oneSecDelay
+    jal ra oneSecDelay
     jal zero pollInport
 
 moveUser_down:
     jal ra checkDownValid
-    jal x9 restoreRowToDefault   # jump to   and save position to ra
+    jal ra restoreRowToDefault   # jump to   and save position to ra
     addi x11 x11 0xFFFFFFFC # update User row reference with new current position 
-    lw x12 0x0(x11) # Store maze values one row below current user row
-    xor x12 x10 x12 # draw user into row
-    sw x12 0x500(x11)
-    jal x7 oneSecDelay
+    lw x13 0x0(x11) # Store maze values one row below current user row
+    xor x12 x10 x13 # draw user into row
+    sw x12 0x0(x11)
+    jal ra oneSecDelay
     jal zero pollInport
 
 restoreRowToDefault:
@@ -115,7 +158,7 @@ restoreRowToDefault:
     ret
 
 checkUpValid:
-	addi x21 x0 0x3c
+	addi x21 x0 0x38
     beq x11 x21 pollInport
     lw x24 0x4(x11) # get row above
     and x21 x24 x10 # if user can move up AND should be 0 
@@ -131,10 +174,10 @@ checkDownValid:
 
 checkLeftValid:
     lui x13 0x80000
+    beq x13 x10 pollInport # go back to poll if at most left
     lw x24 0x0(x11)
-    beq x13 x24 pollInport # go back to poll if at most left
     slli x14 x10 1 
-    xor x14 x25 x14
+    and x14 x24 x14
     bne x14 x0 pollInport
     ret
 
@@ -143,61 +186,49 @@ checkLeftValid:
     beq x10 x13 pollInport # return to poll if at right arena wall
     lw x24 0x0(x11)
     srli x14 x10 1
-    xor x14 x24 x14
+    and x14 x24 x14
     bne x14 x0 pollInport
     ret
 
 pollInport:
-sw ra 0(sp)  #Pushing the return address to the stack pointer.
-addi sp sp 4
-addi x20 x0 1
-addi x21 x0 2
-addi x22 x0 4
-addi x23 x0 8
-lui x12 0x00005 # set inport
-# addi x12 x12 0x1c
-lw x15 0x0(x12) # getValues 
-beq x15 x20 moveUser_right
-beq x15 x21 moveUser_left
-beq x15 x22 moveUser_up
-beq x15 x23 moveUser_down
-beq x0 x0 pollInport # else keep looping
-addi sp sp -4 # Should never get here
-lw ra 0(sp)
-ret # Should never return
+    addi x20 x0 1 # Right
+    addi x21 x0 2 # Left
+    addi x22 x0 4 # Up
+    addi x23 x0 8 # Down
+    lui x12 0x0010 # set inport
+    addi x12 x12 0xc
+    lw x15 0x0(x12) # getValues 
+    beq x15 x20 moveUser_right
+    beq x15 x21 moveUser_left
+    beq x15 x22 moveUser_up
+    beq x15 x23 moveUser_down
+    beq x0 x0 pollInport # else keep looping
+    jal zero Error # Should never return
 
   
-blinkUser3:
-sw ra 0(sp)  #Pushing the return address to the stack pointer.
-addi sp sp 4
-lw x12 0x500(x11) #user location and maze bits.
-xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
-and x15 x13 x12 # NO USER MAZE BITS
-sw x15 0x500(x11) # remove
-jal ra oneSecDelay
-sw x12 0x500(x11) # add
-jal ra oneSecDelay
-sw x15 0x500(x11) # remove
-jal ra oneSecDelay
-sw x12 0x500(x11) # add
-jal ra oneSecDelay
-sw x15 0x500(x11) # remove
-jal ra oneSecDelay
-sw x12 0x500(x11) # add
-addi sp sp -4
-lw ra 0(sp)
-ret
+blinkUser:
+    sw ra 0(sp)  #Pushing the return address to the stack pointer.
+    addi sp sp 4
+    lw x12 0x0(x11) #user location and maze bits.
+    xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
+    and x15 x13 x12 # NO USER MAZE BITS
+    sw x15 0x0(x11) # remove
+    jal ra oneSecDelay
+    sw x12 0x0(x11) # add
+    addi sp sp -4
+    lw ra 0(sp)
+    ret
 
 oneSecDelay:
-sw ra 0(sp)  #Pushing the return address to the stack pointer.
-addi sp sp 4
-lui x14 0x00601
-jal ra oneSecLoop
-addi sp sp -4
-lw ra 0(sp)
-ret
+    sw ra 0(sp)  #Pushing the return address to the stack pointer.
+    addi sp sp 4
+    lui x14 0x00601
+    jal ra oneSecLoop
+    addi sp sp -4
+    lw ra 0(sp)
+    ret
 
 oneSecLoop:   
-addi x14 x14 -1         # decr delay counter
-# bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
-ret
+    addi x14 x14 -1           # decr delay counter
+    bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
+    ret
