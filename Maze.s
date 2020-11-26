@@ -1,7 +1,7 @@
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
-lui x13 0xBEEF # Play location out of bound - exited program
+lui x9 0xBEEF # Play location out of bound - exited program
 jal ra pollInport # Program contained in this loop
 lui x10 0xDEAD # Play location out of bound - exited program
 loop: jal zero loop # Loop forever 
@@ -168,25 +168,17 @@ xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 use
 and x15 x13 x12 # NO USER MAZE BITS
 sw x15 0x0(x11) # remove
 jal ra oneSecDelay
-addi sp sp -4
-lw ra 0(sp)
 sw x12 0x0(x11) # add
 jal ra oneSecDelay
-addi sp sp -4
-lw ra 0(sp)
 sw x15 0x0(x11) # remove
 jal ra oneSecDelay
-addi sp sp -4
-lw ra 0(sp)
 sw x12 0x0(x11) # add
 jal ra oneSecDelay
-addi sp sp -4
-lw ra 0(sp)
 sw x15 0x0(x11) # remove
 jal ra oneSecDelay
+sw x12 0x0(x11) # add
 addi sp sp -4
 lw ra 0(sp)
-sw x12 0x0(x11) # add
 jalr ra
 
 oneSecDelay:
