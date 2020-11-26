@@ -3,6 +3,8 @@ addi sp sp -16 #reserving 16byte stack
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
 jal ra pollInport # Program contained in this loop
+
+Error:
 lui x10 0xDEAD # Play location out of bound - exited program
 loop: jal zero loop # Loop forever 
 
@@ -146,8 +148,6 @@ checkLeftValid:
     ret
 
 pollInport:
-sw ra 0(sp)  #Pushing the return address to the stack pointer.
-addi sp sp 4
 addi x20 x0 1
 addi x21 x0 2
 addi x22 x0 4
@@ -160,9 +160,7 @@ beq x15 x21 moveUser_left
 beq x15 x22 moveUser_up
 beq x15 x23 moveUser_down
 beq x0 x0 pollInport # else keep looping
-addi sp sp -4 # Should never get here
-lw ra 0(sp)
-ret # Should never return
+jal zero Error # Should never return
 
   
 blinkUser3:
