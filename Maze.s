@@ -1,10 +1,12 @@
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
+addi x31 x0 0x300 # Debug offset
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
 jal ra pollInport # Program contained in this loop
 lui x10 0xDEAD # Play location out of bound - exited program
 loop: jal zero loop # Loop forever 
+
 
 #Draws the maze and adds user in on location (0,0)
 InitializeDisplay:
@@ -12,48 +14,48 @@ sw ra 0(sp)  #Pushing the return address to the stack pointer.
 addi sp sp 4
 #Setting up maze.
 addi x13 x0 0xfffffffe
-sw x13 0x38(x0)
+sw x13 0x38(x31)
 lui x13 0x82014
 addi x13 x13 0x104
-sw x13 0x34(x0)
+sw x13 0x34(x31)
 lui x13 0xbabd7
 addi x13 x13 0x6aa
 addi x13 x13 0x6ab
-sw x13 0x30(x0)
+sw x13 0x30(x31)
 lui x13 0xaaa14
 addi x13 x13 0x15d
-sw x13 0x2c(x0)
+sw x13 0x2c(x31)
 lui x13 0xaaaf5
 addi x13 x13 0x6a2
 addi x13 x13 0x6a3
-sw x13 0x28(x0)
+sw x13 0x28(x31)
 lui x13 0xaea04
 addi x13 x13 0x57d
-sw x13 0x24(x0)
+sw x13 0x24(x31)
 lui x13 0xa8bff
 addi x13 x13 0x541
-sw x13 0x20(x0)
+sw x13 0x20(x31)
 lui x13 0xab811
 addi x13 x13 0x55f
-sw x13 0x1c(x0)
+sw x13 0x1c(x31)
 lui x13 0x88fd5
 addi x13 x13 0x551
-sw x13 0x18(x0)
+sw x13 0x18(x31)
 lui x13 0xbe055
 addi x13 x13 0x555
-sw x13 0x14(x0)
+sw x13 0x14(x31)
 lui x13 0xa3f55
 addi x13 x13 0x555
-sw x13 0x10(x0)
+sw x13 0x10(x31)
 lui x13 0xb8055
 addi x13 x13 0x545
-sw x13 0x0c(x0)
+sw x13 0x0c(x31)
 lui x13 0x8ff55
 addi x13 x13 0x57d
-sw x13 0x08(x0)
+sw x13 0x08(x31)
 lui x13 0xa0044
 addi x13 x13 0x401
-sw x13 0x04(x0)
+sw x13 0x04(x31)
 lui x13 0x3ffff
 addi x13 x13 0x7ff
 addi x13 x13 0x7ff
@@ -61,8 +63,8 @@ addi x13 x13 0x1
 #Adding in user at location (0,00)
 lui x10 0x80000 #user bit memory reference
 or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
-addi x11 x0 0 #Users row position reference 
-sw x12 0x00(x11) #writing the user and maze to display
+addi x11 x31 0 #Users row position reference 
+sw x12 0x00(x31) #writing the user and maze to display
 jal ra blinkUser3
 addi sp sp -4
 lw ra 0(sp)
