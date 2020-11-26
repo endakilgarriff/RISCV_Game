@@ -129,10 +129,10 @@ checkDownValid:
 
 checkLeftValid:
     lui x13 0x80000
-    lw x24 0(x11)
-    beq x13 x24 pollInport # go back to poll if at most left
+    beq x13 x10 pollInport # go back to poll if at most left
+    lw x24 0x0(x11)
     slli x14 x10 1 
-    xor x14 x25 x14
+    and x14 x24 x14
     bne x14 x0 pollInport
     ret
 
@@ -141,7 +141,7 @@ checkLeftValid:
     beq x10 x13 pollInport # return to poll if at right arena wall
     lw x24 0(x11)
     srli x14 x10 1
-    xor x14 x25 x14
+    and x14 x24 x14
     bne x14 x0 pollInport
     ret
 
