@@ -1,6 +1,6 @@
 addi sp zero 0x7ff #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
-addi x31 x0 0x500 # Debug offset
+addi x31 x0 0x500 # Debug offset - start display memory
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
 jal ra pollInport # Program contained in this loop
@@ -154,9 +154,9 @@ addi x20 x0 1
 addi x21 x0 2
 addi x22 x0 4
 addi x23 x0 8
-lui x12 0x0010 # set inport
-addi x12 x12 0x100
-lw x15 0x7ff(x12) # getValues 
+lui x12 0x00005 # set inport
+# addi x12 x12 0x1c
+lw x15 0x0(x12) # getValues 
 beq x15 x20 moveUser_right
 beq x15 x21 moveUser_left
 beq x15 x22 moveUser_up
