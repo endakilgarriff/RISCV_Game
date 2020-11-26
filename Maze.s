@@ -34,7 +34,7 @@
 #    Output:
 #      X"0000" & outport(15:0)    offset = 0x10, outport(15:0) value
 
-addi sp zero 0x100 #Initializing the stack on register x2
+addi sp zero 0x7ff #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 addi x31 x0 0x500 # Debug offset - start display memory
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
@@ -103,11 +103,11 @@ lui x10 0x80000 #user bit memory reference
 or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
 addi x11 x31 0 #Users row position reference 
 sw x12 0x0(x11) #writing the user and maze to display
-    addi x14 zero 0x3
+addi x17 zero 0x3
     loop3: # BlinkUser 3 times at start
         jal ra blinkUser
-        addi x14 x14 -1
-        beq x14 x0 loop3
+        addi x17 x17 -1
+        bne x17 x0 loop3
     addi sp sp -4
     lw ra 0(sp)
     jalr  ra
@@ -230,5 +230,5 @@ oneSecDelay:
 
 oneSecLoop:   
     addi x14 x14 -1           # decr delay counter
-    bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
+    # bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
     ret
