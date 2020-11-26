@@ -1,3 +1,40 @@
+# RISC-V Maze game
+# Created by Enda Kilgarriff (17351606) - Maya McDevitt , National University of Ireland, Galway
+# Creation date: Nov 2020
+#
+#==============================
+
+# Copy/modify/paste this assembly program to Venus online assembler / simulator (Editor Window TAB) 
+# Venus https://www.kvakil.me/venus/
+
+# Convert Venus program dump (column of 32-bit instrs) to vicilogic instruction memory format (rows of 8x32-bit instrs)
+# https://www.vicilogic.com/static/ext/RISCV/programExamples/convert_VenusProgramDump_to_vicilogicInstructionMemoryFormat.pdf
+
+# Load machine code into vicilogic (256 arena): 
+# https://www.vicilogic.com/vicilearn/run_step/?s_id=1762
+
+# assembly program   # Notes  (default imm format is decimal 0d)
+
+# register allocation
+#  x7  newTargetLoopCount = 8
+#  x8  0x80000000, bit 31 asserted  
+#  x9  general use register 
+#  x10 target register, seed with 0x801000
+#  x11 player register, seed with 0x080000 
+#  x12  general use register 
+#  x13 loopCount 
+#  x14  general use register 
+#  x15  peripheral counter base address = 0x00010000
+#   Address offsets:
+#    Input: 
+#	   control0 register address  offset = 0,    (2:0) = Counter load, up, countCE
+#      X"0000" & loadDat(15:0)    offset = 4,    counter loadDat(15:0)
+#      X"0000" & count(15:0)      offset = 8,    count(15:0) 
+#      X"0000" & rinport(15:0)    offset = 0xc,  Registered inport value (inport delayed by one clk period)
+#    Output:
+#      X"0000" & outport(15:0)    offset = 0x10, outport(15:0) value
+
+
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
