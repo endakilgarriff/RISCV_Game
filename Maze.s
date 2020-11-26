@@ -64,7 +64,7 @@ addi x13 x13 0x1
 lui x10 0x80000 #user bit memory reference
 or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
 addi x11 x31 0 #Users row position reference 
-sw x12 0x500(x31) #writing the user and maze to display
+sw x12 0x0(x11) #writing the user and maze to display
 jal ra blinkUser3
 addi sp sp -4
 lw ra 0(sp)
@@ -75,7 +75,7 @@ moveUser_right:
 	jal ra restoreRowToDefault
     srli x10 x10 0x1 # Shift user right 1
     xor x12 x12 x10 # Draw user into row
-    sw x12 0x500(x11)
+    sw x12 0x0(x11)
     jal ra oneSecDelay
     jal zero pollInport
 
@@ -84,7 +84,7 @@ moveUser_left:
     jal x9 restoreRowToDefault
     slli x10 x10 0x1 # Shift user right 1
     xor x12 x12 x10 # Draw user into row
-    sw x12 0x500(x11)
+    sw x12 0x0(x11)
     jal x7 oneSecDelay
     jal zero pollInport
 
@@ -93,7 +93,7 @@ moveUser_up:
     jal x9 restoreRowToDefault   # jump to restore default
     addi x11 x11 0x4 # update User row reference with new current position 
     xor x12 x10 x12 # draw user into row
-    sw x12 0x500(x11)
+    sw x12 0x0(x11)
     jal x7 oneSecDelay
     jal zero pollInport
 
@@ -101,14 +101,14 @@ moveUser_down:
     jal ra checkDownValid
     jal x9 restoreRowToDefault   # jump to   and save position to ra
     addi x11 x11 0xFFFFFFFC # update User row reference with new current position 
-    lw x12 0x500(x11) # Store maze values one row below current user row
+    lw x12 0x0(x11) # Store maze values one row below current user row
     xor x12 x10 x12 # draw user into row
     sw x12 0x500(x11)
     jal x7 oneSecDelay
     jal zero pollInport
 
 restoreRowToDefault:
-    lw x12 0x500(x11) # Read memory of row that user is currently on (User row stored in x11, x13 temp reg)
+    lw x12 0x0(x11) # Read memory of row that user is currently on (User row stored in x11, x13 temp reg)
     xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
     and x12 x13 x12 # AND original row with inverted user to restore to default 
     sw x12 0x500(x11) # Restore current row to default no immediate value - write to user current row
@@ -124,14 +124,14 @@ checkUpValid:
 
 checkDownValid:
     beq x11 x0 pollInport # If row is 0 don't move down
-    lw x24 0xFFFFFFFC(x11) # get row below
+    lw x24 0xFFFFFE08(x11) # get row below
     and x22 x24 x10 # if user can move down 
     bne x22 x0 pollInport
     ret
 
 checkLeftValid:
     lui x13 0x80000
-    lw x24 0(x11)
+    lw x24 0x0(x11)
     beq x13 x24 pollInport # go back to poll if at most left
     slli x14 x10 1 
     xor x14 x25 x14
@@ -141,9 +141,9 @@ checkLeftValid:
  checkRightValid:
     addi x13 x0 0x1
     beq x10 x13 pollInport # return to poll if at right arena wall
-    lw x24 0(x11)
+    lw x24 0x0(x11)
     srli x14 x10 1
-    xor x14 x25 x14
+    xor x14 x24 x14
     bne x14 x0 pollInport
     ret
 
