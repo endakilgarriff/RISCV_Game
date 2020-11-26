@@ -81,30 +81,31 @@ moveUser_right:
 
 moveUser_left:
     jal ra checkLeftValid
-    jal x9 restoreRowToDefault
+    jal ra restoreRowToDefault
     slli x10 x10 0x1 # Shift user right 1
     xor x12 x12 x10 # Draw user into row
     sw x12 0x0(x11)
-    jal x7 oneSecDelay
+    jal ra oneSecDelay
     jal zero pollInport
 
 moveUser_up:
     jal ra checkUpValid
-    jal x9 restoreRowToDefault   # jump to restore default
+    jal ra restoreRowToDefault   # jump to restore default
     addi x11 x11 0x4 # update User row reference with new current position 
-    xor x12 x10 x12 # draw user into row
+    lw x13 0x0(x11)
+    xor x12 x10 x13 # draw user into row
     sw x12 0x0(x11)
-    jal x7 oneSecDelay
+    jal ra oneSecDelay
     jal zero pollInport
 
 moveUser_down:
     jal ra checkDownValid
-    jal x9 restoreRowToDefault   # jump to   and save position to ra
+    jal ra restoreRowToDefault   # jump to   and save position to ra
     addi x11 x11 0xFFFFFFFC # update User row reference with new current position 
-    lw x12 0x0(x11) # Store maze values one row below current user row
-    xor x12 x10 x12 # draw user into row
+    lw x13 0x0(x11) # Store maze values one row below current user row
+    xor x12 x10 x13 # draw user into row
     sw x12 0x0(x11)
-    jal x7 oneSecDelay
+    jal ra oneSecDelay
     jal zero pollInport
 
 restoreRowToDefault:
@@ -115,7 +116,7 @@ restoreRowToDefault:
     ret
 
 checkUpValid:
-	addi x21 x0 0x3c
+	addi x21 x0 0x38
     beq x11 x21 pollInport
     lw x24 0x4(x11) # get row above
     and x21 x24 x10 # if user can move up AND should be 0 
@@ -148,10 +149,10 @@ checkLeftValid:
     ret
 
 pollInport:
-addi x20 x0 1
-addi x21 x0 2
-addi x22 x0 4
-addi x23 x0 8
+addi x20 x0 1 # Right
+addi x21 x0 2 # Left
+addi x22 x0 4 # Up
+addi x23 x0 8 # Down
 lui x12 0x0010 # set inport
 addi x12 x12 0xc
 lw x15 0x0(x12) # getValues 
