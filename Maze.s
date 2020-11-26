@@ -223,13 +223,13 @@ blinkUser3:
 oneSecDelay:
     sw ra 0(sp)  #Pushing the return address to the stack pointer.
     addi sp sp 4
-    lui x14 0x00601
+    lui x17 0x00601
     jal ra oneSecLoop
     addi sp sp -4
     lw ra 0(sp)
     ret
 
 oneSecLoop:   
-    addi x14 x14 -1           # decr delay counter
-    bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
+    addi x17 x17 -1           # decr delay counter
+    bne  x17 x0, oneSecLoop # branch: loop if x12 != 0
     ret
