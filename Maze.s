@@ -110,7 +110,7 @@ restoreRowToDefault:
     xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
     and x12 x13 x12 # AND original row with inverted user to restore to default 
     sw x12 0x0(x11) # Restore current row to default no immediate value - write to user current row
-    jalr ra
+    ret
 
 checkUpValid:
 	addi x21 x0 0x3c
@@ -118,14 +118,14 @@ checkUpValid:
     lw x24 0x4(x11) # get row above
     and x21 x24 x10 # if user can move up AND should be 0 
     bne x21 x0 pollInport #return to checking if above is high
-	jalr ra
+	ret
 
 checkDownValid:
     beq x11 x0 pollInport # If row is 0 don't move down
     lw x24 0xFFFFFFFC(x11) # get row below
     and x22 x24 x10 # if user can move down 
     bne x22 x0 pollInport
-    jalr ra
+    ret
 
 checkLeftValid:
     lui x13 0x80000
@@ -134,7 +134,7 @@ checkLeftValid:
     slli x14 x10 1 
     xor x14 x25 x14
     bne x14 x0 pollInport
-    jalr ra
+    ret
 
  checkRightValid:
     addi x13 x0 0x1
@@ -143,9 +143,11 @@ checkLeftValid:
     srli x14 x10 1
     xor x14 x25 x14
     bne x14 x0 pollInport
-    jalr ra
+    ret
 
 pollInport:
+sw ra 0(sp)  #Pushing the return address to the stack pointer.
+addi sp sp 4
 addi x20 x0 1
 addi x21 x0 2
 addi x22 x0 4
@@ -158,6 +160,9 @@ beq x15 x21 moveUser_left
 beq x15 x22 moveUser_up
 beq x15 x23 moveUser_down
 beq x0 x0 pollInport # else keep looping
+addi sp sp -4 # Should never get here
+lw ra 0(sp)
+ret # Should never return
 
   
 blinkUser3:
@@ -179,7 +184,7 @@ jal ra oneSecDelay
 sw x12 0x0(x11) # add
 addi sp sp -4
 lw ra 0(sp)
-jalr ra
+ret
 
 oneSecDelay:
 sw ra 0(sp)  #Pushing the return address to the stack pointer.
@@ -188,9 +193,9 @@ lui x14 0x00601
 jal ra oneSecLoop
 addi sp sp -4
 lw ra 0(sp)
-jalr ra
+ret
 
 oneSecLoop:   
 addi x14 x14 -1           # decr delay counter
 bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
-jalr ra
+ret
