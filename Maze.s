@@ -1,6 +1,6 @@
-addi sp zero 0x100 #Initializing the stack on register x2
+addi sp zero 0x7ff #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
-addi x31 x0 0x300 # Debug offset
+addi x31 x0 0x500 # Debug offset
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
 jal ra pollInport # Program contained in this loop
@@ -64,7 +64,7 @@ addi x13 x13 0x1
 lui x10 0x80000 #user bit memory reference
 or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
 addi x11 x31 0 #Users row position reference 
-sw x12 0x00(x31) #writing the user and maze to display
+sw x12 0x500(x31) #writing the user and maze to display
 jal ra blinkUser3
 addi sp sp -4
 lw ra 0(sp)
@@ -75,7 +75,7 @@ moveUser_right:
 	jal ra restoreRowToDefault
     srli x10 x10 0x1 # Shift user right 1
     xor x12 x12 x10 # Draw user into row
-    sw x12 0x0(x11)
+    sw x12 0x500(x11)
     jal ra oneSecDelay
     jal zero pollInport
 
@@ -84,7 +84,7 @@ moveUser_left:
     jal x9 restoreRowToDefault
     slli x10 x10 0x1 # Shift user right 1
     xor x12 x12 x10 # Draw user into row
-    sw x12 0x0(x11)
+    sw x12 0x500(x11)
     jal x7 oneSecDelay
     jal zero pollInport
 
@@ -93,7 +93,7 @@ moveUser_up:
     jal x9 restoreRowToDefault   # jump to restore default
     addi x11 x11 0x4 # update User row reference with new current position 
     xor x12 x10 x12 # draw user into row
-    sw x12 0x0(x11)
+    sw x12 0x500(x11)
     jal x7 oneSecDelay
     jal zero pollInport
 
@@ -101,17 +101,17 @@ moveUser_down:
     jal ra checkDownValid
     jal x9 restoreRowToDefault   # jump to   and save position to ra
     addi x11 x11 0xFFFFFFFC # update User row reference with new current position 
-    lw x12 0x0(x11) # Store maze values one row below current user row
+    lw x12 0x500(x11) # Store maze values one row below current user row
     xor x12 x10 x12 # draw user into row
-    sw x12 0x0(x11)
+    sw x12 0x500(x11)
     jal x7 oneSecDelay
     jal zero pollInport
 
 restoreRowToDefault:
-    lw x12 0x0(x11) # Read memory of row that user is currently on (User row stored in x11, x13 temp reg)
+    lw x12 0x500(x11) # Read memory of row that user is currently on (User row stored in x11, x13 temp reg)
     xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
     and x12 x13 x12 # AND original row with inverted user to restore to default 
-    sw x12 0x0(x11) # Restore current row to default no immediate value - write to user current row
+    sw x12 0x500(x11) # Restore current row to default no immediate value - write to user current row
     ret
 
 checkUpValid:
@@ -155,8 +155,8 @@ addi x21 x0 2
 addi x22 x0 4
 addi x23 x0 8
 lui x12 0x0010 # set inport
-addi x12 x12 0xc
-lw x15 0x0(x12) # getValues 
+addi x12 x12 0x100
+lw x15 0x7ff(x12) # getValues 
 beq x15 x20 moveUser_right
 beq x15 x21 moveUser_left
 beq x15 x22 moveUser_up
@@ -170,20 +170,20 @@ ret # Should never return
 blinkUser3:
 sw ra 0(sp)  #Pushing the return address to the stack pointer.
 addi sp sp 4
-lw x12 0x0(x11) #user location and maze bits.
+lw x12 0x500(x11) #user location and maze bits.
 xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
 and x15 x13 x12 # NO USER MAZE BITS
-sw x15 0x0(x11) # remove
+sw x15 0x500(x11) # remove
 jal ra oneSecDelay
-sw x12 0x0(x11) # add
+sw x12 0x500(x11) # add
 jal ra oneSecDelay
-sw x15 0x0(x11) # remove
+sw x15 0x500(x11) # remove
 jal ra oneSecDelay
-sw x12 0x0(x11) # add
+sw x12 0x500(x11) # add
 jal ra oneSecDelay
-sw x15 0x0(x11) # remove
+sw x15 0x500(x11) # remove
 jal ra oneSecDelay
-sw x12 0x0(x11) # add
+sw x12 0x500(x11) # add
 addi sp sp -4
 lw ra 0(sp)
 ret
@@ -198,6 +198,6 @@ lw ra 0(sp)
 ret
 
 oneSecLoop:   
-addi x14 x14 -1           # decr delay counter
-bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
+addi x14 x14 -1         # decr delay counter
+# bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
 ret
