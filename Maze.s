@@ -169,7 +169,7 @@ restoreRowToDefault:
 
 checkUpValid:
 	addi x21 x0 0x38
-    beq x11 x21 pollInport
+    beq x11 x21 endDetection # Check if user is in most right location - if yes Game win
     lw x24 0x4(x11) # get row above
     and x21 x24 x10 # if user can move up AND should be 0 
     bne x21 x0 pollInport #return to checking if above is high
@@ -225,3 +225,11 @@ oneSecLoop:
     addi x17 x17 -1           # decr delay counter
     bne  x17 x0, oneSecLoop # branch: loop if x17 != 0
     ret
+
+endDetection:
+    addi x13 x0 0x1 # At right of Arena 
+    beq x10 x13 gameEnd
+
+gameEnd:
+    jal ra blinkUser
+    beq zero zero gameEnd
