@@ -39,12 +39,12 @@ addi sp sp -16 #reserving 16byte stack
 lui x16 0x0010 # Set Read Inport Address
 addi x16 x16 0xc 
 jal ra InitializeDisplay 
-lui x9 0xBEEF # Play location out of bound - exited program
 jal zero pollInport # Program contained in this loop
 
+# Error handling - DEAD written to x10 to indicate error
 Error:
-lui x10 0xDEAD # Play location out of bound - exited program
-loop: jal zero loop # Loop forever 
+    lui x10 0xDEAD          # Exited program
+    loop: jal zero loop     # Loop forever 
 
 #Draws the maze and adds user in on location (0,0)
 InitializeDisplay:
@@ -98,11 +98,11 @@ InitializeDisplay:
     addi x13 x13 0x7ff
     addi x13 x13 0x7ff
     addi x13 x13 0x1
-    #Adding in user at location (0,00) and the final row of maze.
-    lui x10 0x80000 #user bit memory reference
-    or x12 x13 x10 #Used User Movement Register x12 to store user location and maze bits.
-    addi x11 x0 0 #Users Row Memory Reference
-    sw x12 0x00(x11) #writing the user and maze to display
+    # Adding in user at location (0,00) and the final row of maze.
+    lui x10 0x80000     # User bit memory reference
+    or x12 x13 x10      # Used User Movement Register x12 to store user location and maze bits.
+    addi x11 x0 0       # Users Row Memory Reference
+    sw x12 0x00(x11)    # Writing the user and maze to display
     #Blinking The User Three Times
     jal ra blinkUser 
     jal ra blinkUser
@@ -111,24 +111,25 @@ InitializeDisplay:
     lw ra 0(sp)
     jalr  ra
 
+# Main loop - checking what move user wants to make
 pollInport:
-    addi x20 x0 1 # Right
-    addi x21 x0 2 # Left
-    addi x22 x0 4 # Up
-    addi x23 x0 8 # Down
-    lw x18 0x0(x16) # getValues 
+    addi x20 x0 1   # Right
+    addi x21 x0 2   # Left
+    addi x22 x0 4   # Up
+    addi x23 x0 8   # Down
+    lw x18 0x0(x16)             # Get inport values 
     beq x18 x20 moveUser_right
     beq x18 x21 moveUser_left
     beq x18 x22 moveUser_up
     beq x18 x23 moveUser_down
-    beq x0 x0 pollInport # else keep looping
-    jal zero Error # Should never return
+    beq x0 x0 pollInport        # Else keep looping
+    jal zero Error              # Should never return - error handeling 
 
 moveUser_right:
     jal ra checkRightValid
 	jal ra restoreRowToDefault
-    srli x10 x10 0x1 # Shift user right 1
-    xor x12 x12 x10 # Draw user into row
+    srli x10 x10 0x1            # Shift user right 1
+    xor x12 x12 x10             # Draw user into row
     sw x12 0x0(x11)
     jal ra oneSecDelay
     jal zero pollInport
@@ -136,53 +137,60 @@ moveUser_right:
 moveUser_left:
     jal ra checkLeftValid
     jal ra restoreRowToDefault
-    slli x10 x10 0x1 # Shift user right 1
-    xor x12 x12 x10 # Draw user into row
+    slli x10 x10 0x1            # Shift user right 1
+    xor x12 x12 x10             # Draw user into row
     sw x12 0x0(x11)
     jal ra oneSecDelay
     jal zero pollInport
 
 moveUser_up:
     jal ra checkUpValid
-    jal ra restoreRowToDefault   # jump to restore default
-    addi x11 x11 0x4 # update User row reference with new current position 
+    jal ra restoreRowToDefault 
+    addi x11 x11 0x4            # Update User row reference with new current position 
     lw x13 0x0(x11)
-    xor x12 x10 x13 # draw user into row
+    xor x12 x10 x13             # Draw user into row
     sw x12 0x0(x11)
     jal ra oneSecDelay
     jal zero pollInport
 
 moveUser_down:
     jal ra checkDownValid
-    jal ra restoreRowToDefault   # jump to   and save position to ra
-    addi x11 x11 0xFFFFFFFC # update User row reference with new current position 
-    lw x13 0x0(x11) # Store maze values one row below current user row
-    xor x12 x10 x13 # draw user into row
+    jal ra restoreRowToDefault   
+    addi x11 x11 0xFFFFFFFC     # Update User row reference with new current position 
+    lw x13 0x0(x11)             # Store maze values one row below current user row
+    xor x12 x10 x13             # Draw user into row
     sw x12 0x0(x11)
     jal ra oneSecDelay
-    jal zero pollInport
+    jal zero pollInport         
 
+# Redraw maze row without user 
 restoreRowToDefault:
-    lw x12 0x0(x11) # Read memory of row that user is currently on (User row stored in x11, x12 temp reg)
-    xor x12 x12 x10 #removing user from the row
-    sw x12 0x0(x11) # Restore current row to default no immediate value - write to user current row
+    lw x12 0x0(x11) 
+    xor x12 x12 x10             # Unset user from the row
+    sw x12 0x0(x11) 
     ret
 
+# If user at arena bottom boundary or below bit next to user is high return to checking inport value
+# Else valid move - return to make move
 checkUpValid:
 	addi x21 x0 0x38
-    beq x11 x21 endDetection # Check if user is in most right location - if yes Game win
-    lw x24 0x4(x11) # get row above
-    and x21 x24 x10 # if user can move up AND should be 0 
-    bne x21 x0 pollInport #return to checking if above is high
+    beq x11 x21 endDetection    # Check if user is in most right location - if yes Game win
+    lw x24 0x4(x11)             # Get row above
+    and x21 x24 x10             # If user can move up AND should be 0 
+    bne x21 x0 pollInport       # Return to checking if above is high
 	ret
 
+# If user at arena bottom boundary or below bit next to user is high return to checking inport value
+# Else valid move - return to make move
 checkDownValid:
-    beq x11 x0 pollInport # If row is 0 don't move down
-    lw x24 0xFFFFFFFC(x11) # get row below
-    and x22 x24 x10 # if user can move down 
+    beq x11 x0 pollInport 
+    lw x24 0xFFFFFFFC(x11)  # get row below
+    and x22 x24 x10         # If user can move down 
     bne x22 x0 pollInport
     ret
 
+# If user at left boundary or left bit next to user is high return to checking inport value
+# Else valid move - return to make move
 checkLeftValid:
     lui x13 0x80000
     beq x13 x10 pollInport # go back to poll if at most left
@@ -192,18 +200,20 @@ checkLeftValid:
     bne x14 x0 pollInport
     ret
 
+# If user at right boundary or right bit next to user is high return to checking inport value
+# Else valid move - return to make move 
  checkRightValid:
     addi x13 x0 0x1
-    beq x10 x13 pollInport # return to poll if at right arena wall
+    beq x10 x13 pollInport  # Return to checking inport if at right arena wall
     lw x24 0(x11)
-    srli x14 x10 1
+    srli x14 x10 1          # Shift user position right 1 bit
     and x14 x24 x14
-    bne x14 x0 pollInport
+    bne x14 x0 pollInport   # If bit at right of user high return to checking inport
     ret
 
 #Makes The User Bit LED Flash Once
 blinkUser: 
-    sw ra 0(sp)  #Pushing the return address to the stack pointer.
+    sw ra 0(sp)                # Pushing the return address to the stack pointer.
     addi sp sp 4
     jal ra restoreRowToDefault # Remove User From The Row.
     jal ra oneSecDelay 
@@ -214,24 +224,26 @@ blinkUser:
     lw ra 0(sp)
     ret
 
-oneSecDelay:
-    sw ra 0(sp)  #Pushing the return address to the stack pointer.
+oneSecDelay: 
+    sw ra 0(sp)  
     addi sp sp 4
     lui x17 0x00601
-    jal ra oneSecLoop #Loop till x17 equals 0
+    jal ra oneSecLoop   # Loop till x17 equals 0
     addi sp sp -4
     lw ra 0(sp)
     ret
 
-oneSecLoop:   
-    addi x17 x17 -1           # decr delay counter
-    bne  x17 x0, oneSecLoop # branch: loop if x17 != 0
+oneSecLoop:  
+    addi x17 x17 -1             # Decr delay counter
+    bne  x17 x0, oneSecLoop     # Branch: loop if x17 != 0
     ret
 
-endDetection:
-    addi x13 x0 0x1 # At right of Arena 
-    beq x10 x13 gameEnd
+# User at highest position - Check if at most right
+endDetection:  
+    addi x13 x0 0x1  
+    beq x10 x13 gameEnd     # If true game won
 
-gameEnd:
+# Blink user until game reset - Game over
+gameEnd: 
     jal ra blinkUser
     beq zero zero gameEnd
