@@ -27,6 +27,7 @@
 #  x16 Read Inport Address = 0x001000c
 #  x17 OneSecDelay Counter
 #  x18 Determine User Input Action
+#  x19 Read Count Address = 0x0010008
 #  x20 Move Right Input, Seed With 0x1
 #  x21 Move Left Input, Seed With 0x2
 #  x22 Move Up Input, Seed With 0x4
@@ -38,6 +39,12 @@ addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 lui x16 0x0010 # Set Read Inport Address
 addi x16 x16 0xc 
+#Starting the counter
+addi x12 x0 3
+lui x13 0x0010
+sw x12 0(x13)
+lui x19 0x0010 # Set Read Count Address
+addi x19 x19 0x8 
 jal ra InitializeDisplay 
 jal zero pollInport # Program contained in this loop
 
@@ -113,6 +120,8 @@ InitializeDisplay:
 
 # Main loop - checking what move user wants to make
 pollInport:
+    lw x3 0x0(x19)  # Get Count Value 
+    sw x3 0x3c(x0)  # Writing score to top row each time opertion returns
     addi x20 x0 1   # Right
     addi x21 x0 2   # Left
     addi x22 x0 4   # Up
@@ -239,8 +248,11 @@ oneSecLoop:
     ret
 
 # User at highest position - Check if at most right
-endDetection:  
-    addi x13 x0 0x1  
+endDetection:
+    addi x13 x0 0x1 
+    #Stopping the counter
+    lui x13 0x0010
+    sw x0 0(x13)
     beq x10 x13 gameEnd     # If true game won
 
 # Blink user until game reset - Game over
