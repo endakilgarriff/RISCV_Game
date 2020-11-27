@@ -232,4 +232,19 @@ endDetection:
 
 gameEnd:
     jal ra blinkUser
-    beq zero zero gameEnd
+    addi x14 zero 0x1F
+    loopMazeExit:
+        jal ra restoreRowToDefault
+        slli x12 x12 1
+        sw x12 0(x11)
+        lw x12 0x38(x0)
+        xor x12 x12 x10
+        sw x12 0x38(x0)
+        addi x11 x11 -4
+        bne x11 zero loopMazeExit
+    addi x14 x14 -1
+    #addi x13 zero 0x38
+    bne x14 zero gameEnd
+foreverEnd:
+    jal ra blinkUser
+    beq zero zero foreverEnd
