@@ -13,7 +13,7 @@
 # Load machine code into vicilogic (256 arena): 
 # https://www.vicilogic.com/vicilearn/run_step/?s_id=1762
 
-# assembly program   # Notes  (default imm format is decimal 0d)
+# assembly program   # Notes  (default imm format is decimal 0d and hex 0x0)
 
 # register allocation
 #  x7  newTargetLoopCount = 8
@@ -163,8 +163,7 @@ moveUser_down:
 
 restoreRowToDefault:
     lw x12 0x0(x11) # Read memory of row that user is currently on (User row stored in x11, x13 temp reg)
-    xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
-    and x12 x13 x12 # AND original row with inverted user to restore to default 
+    xor x12 x12 x10 
     sw x12 0x0(x11) # Restore current row to default no immediate value - write to user current row
     ret
 
@@ -217,12 +216,12 @@ oneSecDelay:
     sw ra 0(sp)  #Pushing the return address to the stack pointer.
     addi sp sp 4
     lui x17 0x00601
-    jal ra oneSecLoop
+    jal ra oneSecLoop #Loop till x17 equals 0
     addi sp sp -4
     lw ra 0(sp)
     ret
 
 oneSecLoop:   
     addi x17 x17 -1           # decr delay counter
-    bne  x17 x0, oneSecLoop # branch: loop if x12 != 0
+    bne  x17 x0, oneSecLoop # branch: loop if x17 != 0
     ret
