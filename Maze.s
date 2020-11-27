@@ -37,7 +37,7 @@
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 lui x16 0x0010 # set inport
-addi x16 x12 0xc
+addi x16 x16 0xc
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
 jal zero pollInport # Program contained in this loop
@@ -115,11 +115,11 @@ pollInport:
     addi x21 x0 2 # Left
     addi x22 x0 4 # Up
     addi x23 x0 8 # Down
-    lw x16 0x0(x12) # getValues 
-    beq x16 x20 moveUser_right
-    beq x16 x21 moveUser_left
-    beq x16 x22 moveUser_up
-    beq x16 x23 moveUser_down
+    lw x18 0x0(x16) # getValues 
+    beq x18 x20 moveUser_right
+    beq x18 x21 moveUser_left
+    beq x18 x22 moveUser_up
+    beq x18 x23 moveUser_down
     beq x0 x0 pollInport # else keep looping
     jal zero Error # Should never return
 
