@@ -103,7 +103,9 @@ InitializeDisplay:
     or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
     addi x11 x0 0 #Users row position reference 
     sw x12 0x00(x11) #writing the user and maze to display
-    jal ra blinkUser3
+    jal ra blinkUser
+    jal ra blinkUser
+    jal ra blinkUser
     addi sp sp -4
     lw ra 0(sp)
     jalr  ra
@@ -199,20 +201,14 @@ checkLeftValid:
     bne x14 x0 pollInport
     ret
 
-blinkUser3:
+blinkUser:
     sw ra 0(sp)  #Pushing the return address to the stack pointer.
     addi sp sp 4
-    lw x12 0x0(x11) #user location and maze bits.
-    xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
-    and x15 x13 x12 # NO USER MAZE BITS
-    addi x14 zero 0x3
-    loop3:
-        sw x15 0x0(x11) # remove
-        jal ra oneSecDelay
-        addi x14 x14 -1 
-        sw x12 0x0(x11) # add
-        jal ra oneSecDelay
-        bne x14 zero loop3
+    jal ra restoreRowToDefault # remove
+    jal ra oneSecDelay
+    xor x12 x12 x10
+    sw x12 0x0(x11) # add
+    jal ra oneSecDelay
     addi sp sp -4
     lw ra 0(sp)
     ret
