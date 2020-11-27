@@ -1,5 +1,5 @@
 # RISC-V Maze game
-# Created by Enda Kilgarriff (17351606) - Maya McDevitt , National University of Ireland, Galway
+# Created by Enda Kilgarriff (17351606) - Maya McDevitt (17309601), National University of Ireland, Galway
 # Creation date: Nov 2020
 #
 #==============================
@@ -16,29 +16,29 @@
 # assembly program   # Notes  (default imm format is decimal 0d and hex 0x0)
 
 # register allocation
-#  x7  newTargetLoopCount = 8
-#  x8  0x80000000, bit 31 asserted  
-#  x9  general use register 
-#  x10 target register, seed with 0x801000
-#  x11 player register, seed with 0x080000 
-#  x12  general use register 
-#  x13 loopCount 
-#  x14  general use register 
-#  x15  peripheral counter base address = 0x00010000
-#   Address offsets:
-#    Input: 
-#	   control0 register address  offset = 0,    (2:0) = Counter load, up, countCE
-#      X"0000" & loadDat(15:0)    offset = 4,    counter loadDat(15:0)
-#      X"0000" & count(15:0)      offset = 8,    count(15:0) 
-#      X"0000" & rinport(15:0)    offset = 0xc,  Registered inport value (inport delayed by one clk period)
-#    Output:
-#      X"0000" & outport(15:0)    offset = 0x10, outport(15:0) value
+#  x1  Return Address for the Stack, Seed With 0xFFFFFFFFFFFFFFF0
+#  x2  Stack Pointer, Seed With 0x100
+#  x10 User Position Memory Reference, Seed With 0x800000
+#  x11 User Row Memory Reference, Seed With 0x00 
+#  x12 User Movement Register
+#  x13 General Use Register 
+#  x14 General Use Register 
+#  x15 General Use Register 
+#  x16 Read Inport Address = 0x001000c
+#  x17 OneSecDelay Counter
+#  x18 Determine User Input Action
+#  x20 Move Right Input, Seed With 0x1
+#  x21 Move Left Input, Seed With 0x2
+#  x22 Move Up Input, Seed With 0x4
+#  x23 Move Down Input, Seed With 0x8
+#  x24 Check If Move is Valid
+#  x25 Check If Move is Valid
 
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
-lui x16 0x0010 # set inport
-addi x16 x16 0xc
-jal ra InitializeDisplay #Storing PC+4 in the return address register x1
+lui x16 0x0010 # Set Read Inport Address
+addi x16 x16 0xc 
+jal ra InitializeDisplay 
 lui x9 0xBEEF # Play location out of bound - exited program
 jal zero pollInport # Program contained in this loop
 
@@ -98,12 +98,13 @@ InitializeDisplay:
     addi x13 x13 0x7ff
     addi x13 x13 0x7ff
     addi x13 x13 0x1
-    #Adding in user at location (0,00)
+    #Adding in user at location (0,00) and the final row of maze.
     lui x10 0x80000 #user bit memory reference
-    or x12 x13 x10 #Used temp register 12 to store user location and maze bits.
-    addi x11 x0 0 #Users row position reference 
+    or x12 x13 x10 #Used User Movement Register x12 to store user location and maze bits.
+    addi x11 x0 0 #Users Row Memory Reference
     sw x12 0x00(x11) #writing the user and maze to display
-    jal ra blinkUser
+    #Blinking The User Three Times
+    jal ra blinkUser 
     jal ra blinkUser
     jal ra blinkUser
     addi sp sp -4
@@ -162,8 +163,8 @@ moveUser_down:
     jal zero pollInport
 
 restoreRowToDefault:
-    lw x12 0x0(x11) # Read memory of row that user is currently on (User row stored in x11, x13 temp reg)
-    xor x12 x12 x10 
+    lw x12 0x0(x11) # Read memory of row that user is currently on (User row stored in x11, x12 temp reg)
+    xor x12 x12 x10 #removing user from the row
     sw x12 0x0(x11) # Restore current row to default no immediate value - write to user current row
     ret
 
@@ -200,13 +201,14 @@ checkLeftValid:
     bne x14 x0 pollInport
     ret
 
-blinkUser:
+#Makes The User Bit LED Flash Once
+blinkUser: 
     sw ra 0(sp)  #Pushing the return address to the stack pointer.
     addi sp sp 4
-    jal ra restoreRowToDefault # remove
-    jal ra oneSecDelay
+    jal ra restoreRowToDefault # Remove User From The Row.
+    jal ra oneSecDelay 
     xor x12 x12 x10
-    sw x12 0x0(x11) # add
+    sw x12 0x0(x11) 
     jal ra oneSecDelay
     addi sp sp -4
     lw ra 0(sp)
