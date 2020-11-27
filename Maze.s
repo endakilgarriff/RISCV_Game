@@ -179,11 +179,11 @@ restoreRowToDefault:
     sw x12 0x0(x11) 
     ret
 
-# If user at arena bottom boundary or below bit next to user is high return to checking inport value
+# If user at arena top boundary or above bit next to user is high return to checking inport value
 # Else valid move - return to make move
 checkUpValid:
 	addi x21 x0 0x38
-    beq x11 x21 endDetection    # Check if user is in most right location - if yes Game win
+    beq x11 x21 endDetection    # Check if user is in most up location - if yes Game win
     lw x24 0x4(x11)             # Get row above
     and x21 x24 x10             # If user can move up AND should be 0 
     bne x21 x0 pollInport       # Return to checking if above is high
@@ -250,12 +250,13 @@ oneSecLoop:
 # User at highest position - Check if at most right
 endDetection:
     addi x13 x0 0x1 
-    #Stopping the counter
-    lui x13 0x0010
-    sw x0 0(x13)
     beq x10 x13 gameEnd     # If true game won
+    jal zero pollInport
 
 # Blink user until game reset - Game over
 gameEnd: 
     jal ra blinkUser
+    #Stopping the counter
+    lui x13 0x0010
+    sw x0 0(x13)
     beq zero zero gameEnd
