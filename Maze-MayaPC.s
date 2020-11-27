@@ -36,11 +36,9 @@
 
 addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
-lui x16 0x0010 # set inport
-addi x16 x12 0xc
 jal ra InitializeDisplay #Storing PC+4 in the return address register x1
 lui x9 0xBEEF # Play location out of bound - exited program
-jal zero pollInport # Program contained in this loop
+jal ra pollInport # Program contained in this loop
 
 Error:
 lui x10 0xDEAD # Play location out of bound - exited program
@@ -107,19 +105,6 @@ InitializeDisplay:
     addi sp sp -4
     lw ra 0(sp)
     jalr  ra
-
-pollInport:
-    addi x20 x0 1 # Right
-    addi x21 x0 2 # Left
-    addi x22 x0 4 # Up
-    addi x23 x0 8 # Down
-    lw x16 0x0(x12) # getValues 
-    beq x16 x20 moveUser_right
-    beq x16 x21 moveUser_left
-    beq x16 x22 moveUser_up
-    beq x16 x23 moveUser_down
-    beq x0 x0 pollInport # else keep looping
-    jal zero Error # Should never return
 
 moveUser_right:
     jal ra checkRightValid
@@ -199,20 +184,39 @@ checkLeftValid:
     bne x14 x0 pollInport
     ret
 
+pollInport:
+addi x20 x0 1 # Right
+addi x21 x0 2 # Left
+addi x22 x0 4 # Up
+addi x23 x0 8 # Down
+lui x12 0x0010 # set inport
+addi x12 x12 0xc
+lw x15 0x0(x12) # getValues 
+beq x15 x20 moveUser_right
+beq x15 x21 moveUser_left
+beq x15 x22 moveUser_up
+beq x15 x23 moveUser_down
+beq x0 x0 pollInport # else keep looping
+jal zero Error # Should never return
+
+  
 blinkUser3:
     sw ra 0(sp)  #Pushing the return address to the stack pointer.
     addi sp sp 4
     lw x12 0x0(x11) #user location and maze bits.
     xori x13 x10 0xFFFFFFFF # Invert user current location in row (x14 temp, x10 user pos)
     and x15 x13 x12 # NO USER MAZE BITS
-    addi x14 zero 0x3
-    loop3:
-        sw x15 0x0(x11) # remove
-        jal ra oneSecDelay
-        addi x14 x14 -1 
-        sw x12 0x0(x11) # add
-        jal ra oneSecDelay
-        bne x14 zero loop3
+    sw x15 0x0(x11) # remove
+    jal ra oneSecDelay
+    sw x12 0x0(x11) # add
+    jal ra oneSecDelay
+    sw x15 0x0(x11) # remove
+    jal ra oneSecDelay
+    sw x12 0x0(x11) # add
+    jal ra oneSecDelay
+    sw x15 0x0(x11) # remove
+    jal ra oneSecDelay
+    sw x12 0x0(x11) # add
     addi sp sp -4
     lw ra 0(sp)
     ret
@@ -220,13 +224,13 @@ blinkUser3:
 oneSecDelay:
     sw ra 0(sp)  #Pushing the return address to the stack pointer.
     addi sp sp 4
-    lui x17 0x00601
+    lui x14 0x00601
     jal ra oneSecLoop
     addi sp sp -4
     lw ra 0(sp)
     ret
 
 oneSecLoop:   
-    addi x17 x17 -1           # decr delay counter
-    bne  x17 x0, oneSecLoop # branch: loop if x12 != 0
+    addi x14 x14 -1           # decr delay counter
+    bne  x14 x0, oneSecLoop # branch: loop if x12 != 0
     ret
