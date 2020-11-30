@@ -39,10 +39,6 @@ addi sp zero 0x100 #Initializing the stack on register x2
 addi sp sp -16 #reserving 16byte stack
 lui x16 0x0010 # Set Read Inport Address
 addi x16 x16 0xc 
-#Starting the counter
-addi x12 x0 3
-lui x13 0x0010
-sw x12 0(x13)
 lui x19 0x0010 # Set Read Count Address
 addi x19 x19 0x8 
 jal ra InitializeDisplay 
@@ -114,6 +110,10 @@ InitializeDisplay:
     jal ra blinkUser 
     jal ra blinkUser
     jal ra blinkUser
+    #Starting the counter
+    addi x12 x0 3
+    lui x13 0x0010
+    sw x12 0(x13)
     addi sp sp -4
     lw ra 0(sp)
     jalr  ra
@@ -261,10 +261,6 @@ gameEnd:
     sw x0 0(x13)
     beq zero zero gameEnd
 
-============================
-Post-assembly program listing
-PC instruction    basic assembly     original assembly             Notes
-     (31:0)        code                 code 
 
 ============================
 Venus 'dump' program binary. No of instructions n = 170
